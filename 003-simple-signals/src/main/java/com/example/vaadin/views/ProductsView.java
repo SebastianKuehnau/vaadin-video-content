@@ -18,15 +18,15 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 
 @Route("")
-public class ProductView extends VerticalLayout {
+public class ProductsView extends VerticalLayout {
 
     // Signal for VAT Factor for multiple clients
     private final NumberSignal vatSignal = SignalFactory.IN_MEMORY_SHARED.number("vat", 19.0);
 
-    // Signal for multiply factor
+    // Signal for local multiply factor
     private final NumberSignal multiplySignal = new NumberSignal(1.0);
 
-    public ProductView(ProductRepository repository) {
+    public ProductsView(ProductRepository repository) {
 
         var vatField = new NumberField("VAT");
         vatField.setStep(0.5);
@@ -52,7 +52,7 @@ public class ProductView extends VerticalLayout {
         grid.addColumn(new ComponentRenderer<>(article -> {
             Span priceSpan = new Span();
 
-            // Effect for showing the price with VAT
+            // Effect for showing the current price with VAT
             ComponentEffect.effect(priceSpan, () ->
                     priceSpan.setText(article.getPrice()
                             .multiply(BigDecimal.ONE.add(BigDecimal.valueOf(vatSignal.value() / 100)))
