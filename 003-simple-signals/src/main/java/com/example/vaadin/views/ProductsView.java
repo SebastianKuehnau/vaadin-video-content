@@ -28,8 +28,8 @@ public class ProductsView extends VerticalLayout {
     // Signal for UI Scoped multiply Factor
     private final NumberSignal uiScopedSignal = new NumberSignal(0.5);
 
-    // Signal for Local multiply Factor
-    private final Map<String, NumberSignal> localSignalMap = new ConcurrentHashMap<>();
+    // Map with Signals for Local multiply Factor
+    private final Map<Long, NumberSignal> localSignalMap = new ConcurrentHashMap<>();
 
     public ProductsView(ProductRepository repository) {
 
@@ -41,7 +41,7 @@ public class ProductsView extends VerticalLayout {
         var grid = new Grid<>(Product.class);
         grid.setColumns("title", "content", "price");
         grid.addColumn(new ComponentRenderer<>(product -> {
-            var localSignal = localSignalMap.computeIfAbsent("localFactor/" + product.getId(), k -> new NumberSignal(1.2));
+            var localSignal = localSignalMap.computeIfAbsent(product.getId(), k -> new NumberSignal(1.2));
 
             var localFactorField = createNumberField("", localSignal);
             localFactorField.addThemeVariants(TextFieldVariant.LUMO_SMALL);
@@ -50,7 +50,7 @@ public class ProductsView extends VerticalLayout {
         })).setHeader("Local Factor").setAutoWidth(true);
 
         grid.addColumn(new ComponentRenderer<>(product -> {
-            var localSignal = localSignalMap.computeIfAbsent("localFactor/" + product.getId(), k -> new NumberSignal(1.2));
+            var localSignal = localSignalMap.computeIfAbsent(product.getId(), k -> new NumberSignal(1.2));
 
             var priceSpan = new Span();
 
@@ -71,9 +71,8 @@ public class ProductsView extends VerticalLayout {
         add(grid);
     }
 
-    private static @NonNull NumberField createNumberField(String Global_Factor, NumberSignal signal) {
-        var numberField = new NumberField(Global_Factor);
-        //<theme-editor-local-classname>
+    private static @NonNull NumberField createNumberField(String fieldLabel, NumberSignal signal) {
+        var numberField = new NumberField(fieldLabel);
         numberField.setStep(0.1);
         numberField.setStepButtonsVisible(true);
         numberField.addValueChangeListener(event -> {
