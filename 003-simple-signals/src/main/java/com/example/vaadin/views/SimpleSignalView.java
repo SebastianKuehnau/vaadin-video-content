@@ -11,7 +11,7 @@ import com.vaadin.flow.router.Route;
 import com.vaadin.signals.NumberSignal;
 
 @Route("")
-public class ProductsView extends VerticalLayout {
+public class SimpleSignalView extends VerticalLayout {
 
     // Signal for Global Value for multiple clients
     private static final NumberSignal globalSignal = new NumberSignal(42.0);
@@ -19,7 +19,7 @@ public class ProductsView extends VerticalLayout {
     // Signal for UI Scoped Value
     private final NumberSignal uiScopedSignal = new NumberSignal(0.5);
 
-    public ProductsView() {
+    public SimpleSignalView() {
 
         var globalField = createNumberField("Global Value", globalSignal);
         // Re-runs whenever globalSignal changes while globalField is attached
