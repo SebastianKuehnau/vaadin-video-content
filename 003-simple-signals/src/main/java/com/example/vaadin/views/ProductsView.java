@@ -1,23 +1,13 @@
 package com.example.vaadin.views;
 
-import com.example.vaadin.data.Product;
-import com.example.vaadin.data.ProductRepository;
 import com.vaadin.flow.component.ComponentEffect;
-import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.NumberField;
-import com.vaadin.flow.component.textfield.TextFieldVariant;
-import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.router.Route;
 import com.vaadin.signals.NumberSignal;
-import org.jspecify.annotations.NonNull;
-
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Route("")
 public class ProductsView extends VerticalLayout {
@@ -28,57 +18,29 @@ public class ProductsView extends VerticalLayout {
     // Signal for UI Scoped multiply Factor
     private final NumberSignal uiScopedSignal = new NumberSignal(0.5);
 
-    // Map with Signals for Local multiply Factor
-    private final Map<Long, NumberSignal> localSignalMap = new ConcurrentHashMap<>();
+    public ProductsView() {
 
-    public ProductsView(ProductRepository repository) {
+        var globalField = createNumberField("Global Factor", globalSignal);
+        ComponentEffect.effect(globalField, () -> Notification.show("Global Factor changed to " + globalSignal.value()));
 
-        var vatField = createNumberField("Global Factor", globalSignal);
-        var multiplyField = createNumberField("UI Scoped Factor", uiScopedSignal);
+        var uiField = createNumberField("UI Scoped Factor", uiScopedSignal);
+        var uiValueField = new Span("");
+        ComponentEffect.bind(uiValueField, uiScopedSignal,
+                (span, value) -> span.setText(String.valueOf(value)));
 
-        add(new HorizontalLayout(vatField, multiplyField));
 
-        var grid = new Grid<>(Product.class);
-        grid.setColumns("title", "content", "price");
-        grid.addColumn(new ComponentRenderer<>(product -> {
-            var localSignal = localSignalMap.computeIfAbsent(product.getId(), k -> new NumberSignal(1.2));
+        VerticalLayout uiLayout = new VerticalLayout(uiField, uiValueField);
+        uiLayout.setPadding(false);
+        uiLayout.setAlignItems(Alignment.CENTER);
 
-            var localFactorField = createNumberField("", localSignal);
-            localFactorField.addThemeVariants(TextFieldVariant.LUMO_SMALL);
-            localFactorField.addClassName("local-factor-field");
-            return localFactorField;
-        })).setHeader("Local Factor").setAutoWidth(true);
-
-        grid.addColumn(new ComponentRenderer<>(product -> {
-            var localSignal = localSignalMap.computeIfAbsent(product.getId(), k -> new NumberSignal(1.2));
-
-            var priceSpan = new Span();
-
-            ComponentEffect.effect(priceSpan, () ->
-                    priceSpan.setText(
-                            product.getPrice()
-                                    .multiply(BigDecimal.valueOf(globalSignal.value()))
-                                    .multiply(BigDecimal.valueOf(uiScopedSignal.value()))
-                                    .multiply(BigDecimal.valueOf(localSignal.value()))
-                                    .setScale(2, RoundingMode.HALF_UP)
-                                    .toString()));
-
-            return priceSpan;
-        })).setHeader("Calculated Price").setAutoWidth(true);
-
-        grid.setItems(repository.findAll());
-
-        add(grid);
+        add(new HorizontalLayout(globalField, uiLayout));
     }
 
-    private static @NonNull NumberField createNumberField(String fieldLabel, NumberSignal signal) {
+    private NumberField createNumberField(String fieldLabel, NumberSignal signal) {
         var numberField = new NumberField(fieldLabel);
         numberField.setStep(0.1);
         numberField.setStepButtonsVisible(true);
-        numberField.addValueChangeListener(event -> {
-            if (event.isFromClient()) //to avoid changes in a read-only transaction
-                signal.value(event.getValue());
-        });
+        numberField.addValueChangeListener(event -> signal.value(event.getValue()));
         ComponentEffect.bind(numberField, signal, NumberField::setValue);
 
         return numberField;
