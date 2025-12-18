@@ -1,10 +1,12 @@
 package com.example.vaadin.views;
 
+import com.vaadin.flow.component.ComponentEffect;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.router.Route;
+import com.vaadin.signals.NumberSignal;
 
 @Route("")
 public class SimpleSignalView extends VerticalLayout {
@@ -33,15 +35,16 @@ public class SimpleSignalView extends VerticalLayout {
         var numberField = new NumberField("Local Number");
         numberField.setStep(1);
         numberField.setStepButtonsVisible(true);
+
 //        numberField.addValueChangeListener(e -> numberSignal.value(e.getValue()));
 //        ComponentEffect.bind(numberField, numberSignal, NumberField::setValue);
 
         var evenBadge = new Span("even");
-        evenBadge.getElement().getThemeList().add(BADGE_CONTRAST);
         /***
          * 5. Signals eliminate the need for complex, cross-component listeners. By letting each component react to the
          * state independently, we decouple our UI and simplify the overall architecture.
          */
+//        evenBadge.getElement().bindAttribute("theme", () -> numberSignal.value() % 2 == 0 ? BADGE_CONTRAST : BADGE_PRIMARY_SUCCESS);
 //        ComponentEffect.effect(evenBadge, () -> {
 //            evenBadge.getElement().getThemeList().clear();
 //            evenBadge.getElement().getThemeList().add(numberSignal.value() % 2 == 0 ?
@@ -49,7 +52,7 @@ public class SimpleSignalView extends VerticalLayout {
 //        });
 
         var unevenBadge = new Span("uneven");
-        unevenBadge.getElement().getThemeList().add(BADGE_CONTRAST);
+//        unevenBadge.getElement().bindAttribute("theme", () -> numberSignal.value() % 2 == 0 ? BADGE_PRIMARY_SUCCESS : BADGE_CONTRAST);
 //        ComponentEffect.effect(unevenBadge, () -> {
 //            unevenBadge.getElement().getThemeList().clear();
 //            unevenBadge.getElement().getThemeList().add(numberSignal.value() % 2 == 0 ?
@@ -72,6 +75,7 @@ public class SimpleSignalView extends VerticalLayout {
             unevenBadge.getElement().getThemeList().add(isEven ? BADGE_CONTRAST : BADGE_PRIMARY_SUCCESS);
         });
 
+        numberField.setValue(0.0);
         add(numberField , new HorizontalLayout(evenBadge, unevenBadge));
     }
 }
