@@ -24,5 +24,6 @@ public class ChatView extends VerticalLayout {
 
       add(messageList, messageInput);
       setSizeFull();
+      setPadding(false);
   }
 }
