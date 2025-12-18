@@ -1,57 +1,77 @@
 package com.example.vaadin.views;
 
-import com.vaadin.flow.component.ComponentEffect;
 import com.vaadin.flow.component.html.Span;
-import com.vaadin.flow.component.notification.Notification;
-import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.router.Route;
-import com.vaadin.signals.NumberSignal;
 
 @Route("")
 public class SimpleSignalView extends VerticalLayout {
 
-    // Signal for Global Value for multiple clients
-    private static final NumberSignal globalSignal = new NumberSignal(42.0);
-
-    // Signal for UI Scoped Value
-    private final NumberSignal uiScopedSignal = new NumberSignal(0.5);
+    public static final String BADGE_CONTRAST = "badge contrast";
+    public static final String BADGE_PRIMARY_SUCCESS = "badge primary success";
 
     public SimpleSignalView() {
 
-        var globalField = createNumberField("Global Value", globalSignal);
-        // Re-runs whenever globalSignal changes while globalField is attached
-        ComponentEffect.effect(globalField, () -> Notification
-                .show("Global value changed to " + globalSignal.value(), 1000, Notification.Position.BOTTOM_START)
-                .addThemeVariants(NotificationVariant.LUMO_CONTRAST));
+        /***
+         * 1. Vaadin Signals provide a reactive way to manage states of components and views, ensuring that UI updates
+         * are targeted and efficient. They replace heavy listeners and are thread-safe as well as lightweight.
+         */
 
-        var uiField = createNumberField("UI Scoped Value", uiScopedSignal);
-        var uiValueField = new Span("");
-        // Binds span text to uiScopedSignal
-        ComponentEffect.bind(uiValueField, uiScopedSignal,
-                (span, value) -> span.setText(String.valueOf(value)));
-        // shows notification on each signal change
-        ComponentEffect.effect(uiValueField, () -> Notification
-                .show("UI Scoped value changed to " + uiScopedSignal.value(), 1000, Notification.Position.BOTTOM_START)
-                .addThemeVariants(NotificationVariant.LUMO_PRIMARY));
+        /***
+         * 4. By using Signals, you create a single source of truth for your state. You bind the input field to the
+         * signal, ensuring that any value changes propagate automatically to the rest of the UI.
+         */
 
-        VerticalLayout uiLayout = new VerticalLayout(uiField, uiValueField);
-        uiLayout.setPadding(false);
-        uiLayout.setAlignItems(Alignment.CENTER);
+//        var numberSignal = new NumberSignal(42.0);
 
-        add(new HorizontalLayout(globalField, uiLayout));
-    }
-
-    private NumberField createNumberField(String fieldLabel, NumberSignal signal) {
-        var numberField = new NumberField(fieldLabel);
-        numberField.setStep(0.1);
+        /***
+         * 2. Take this scenario: We have a number field and two badges for 'even' and 'odd'. Depending on the input,
+         * the corresponding badge reactively turns green to indicate the current state.
+         */
+        var numberField = new NumberField("Local Number");
+        numberField.setStep(1);
         numberField.setStepButtonsVisible(true);
-        numberField.addValueChangeListener(event -> signal.value(event.getValue()));
-        // bind field value to signal; active only while component is attached
-        ComponentEffect.bind(numberField, signal, NumberField::setValue);
+//        numberField.addValueChangeListener(e -> numberSignal.value(e.getValue()));
+//        ComponentEffect.bind(numberField, numberSignal, NumberField::setValue);
 
-        return numberField;
+        var evenBadge = new Span("even");
+        evenBadge.getElement().getThemeList().add(BADGE_CONTRAST);
+        /***
+         * 5. Signals eliminate the need for complex, cross-component listeners. By letting each component react to the
+         * state independently, we decouple our UI and simplify the overall architecture.
+         */
+//        ComponentEffect.effect(evenBadge, () -> {
+//            evenBadge.getElement().getThemeList().clear();
+//            evenBadge.getElement().getThemeList().add(numberSignal.value() % 2 == 0 ?
+//                    BADGE_PRIMARY_SUCCESS : BADGE_CONTRAST);
+//        });
+
+        var unevenBadge = new Span("uneven");
+        unevenBadge.getElement().getThemeList().add(BADGE_CONTRAST);
+//        ComponentEffect.effect(unevenBadge, () -> {
+//            unevenBadge.getElement().getThemeList().clear();
+//            unevenBadge.getElement().getThemeList().add(numberSignal.value() % 2 == 0 ?
+//                    BADGE_CONTRAST : BADGE_PRIMARY_SUCCESS);
+//        });
+
+
+        /***
+         * 3. In a traditional approach you would use a ValueChangeListener to change the style, which creates tight
+         * coupling between the components. The input field ends up managing the state of its neighbors, making the
+         * code harder to maintain.
+         */
+        numberField.addValueChangeListener(event -> {
+            boolean isEven = event.getValue().intValue() % 2 == 0;
+
+            evenBadge.getElement().getThemeList().clear();
+            unevenBadge.getElement().getThemeList().clear();
+
+            evenBadge.getElement().getThemeList().add(isEven ? BADGE_PRIMARY_SUCCESS : BADGE_CONTRAST);
+            unevenBadge.getElement().getThemeList().add(isEven ? BADGE_CONTRAST : BADGE_PRIMARY_SUCCESS);
+        });
+
+        add(numberField , new HorizontalLayout(evenBadge, unevenBadge));
     }
 }
